@@ -295,7 +295,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d9fb5ab97d40403aa111b47768bd5e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  size: {x: 17, y: 16, z: 16}
+  size: {x: 16, y: 16, z: 16}
   smoothTerrain: 1
   flatShaded: 1
   terrainSurface: 0.5
@@ -370,5 +370,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cfe853bbb07b74f9abf0ad599824bdf4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  terrainType: 1
+  terrainType: 0
+  solidEdges: 1
   scale: 7
