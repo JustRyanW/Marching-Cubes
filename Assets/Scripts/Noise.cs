@@ -4,9 +4,16 @@ using UnityEngine;
 
 public static class Noise
 {
-    public static float Perlin3D(float x, float y, float z, float scale = 1f)
+    public static float Perlin3D(float x, float y, float z, float scale = 1f, Vector3? offset = null)
     {
-        if (scale > 0.001f) {
+        if (offset != null)
+        {
+            Vector3 o = (Vector3)offset;
+            x += o.x; y += o.y; z += o.z;
+        }
+
+        if (scale > 0.001f)
+        {
             x /= scale; y /= scale; z /= scale;
         }
 

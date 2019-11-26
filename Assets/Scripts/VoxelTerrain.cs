@@ -23,17 +23,22 @@ public class VoxelTerrain : MonoBehaviour
     MeshFilter meshFilter;
     TerrainGenerator terrainGenerator;
     Mesh mesh;
+    MeshCollider meshCollider;
 
     private void Start()
     {
         FindComponents();
-        //PopulateTerrainMap();
-        //CreateMeshData();
+        UpdateMesh();
+    }
+
+    public void UpdateMesh()
+    {
+        PopulateTerrainMap();
+        CreateMeshData();
     }
 
     void CreateMeshData()
     {
-
         ClearMeshData();
 
         // Loop through each "cube" in our terrain.
@@ -43,15 +48,12 @@ public class VoxelTerrain : MonoBehaviour
             {
                 for (int z = 0; z < size.z; z++)
                 {
-
                     // Create an array of floats representing each corner of a cube and get the value from our terrainMap.
                     float[] cube = new float[8];
                     for (int i = 0; i < 8; i++)
                     {
-
                         Vector3Int corner = new Vector3Int(x, y, z) + MarchingCubes.CornerTable[i];
                         cube[i] = terrainMap[corner.x, corner.y, corner.z];
-
                     }
 
                     // Pass the value into our MarchCube function.
@@ -60,16 +62,12 @@ public class VoxelTerrain : MonoBehaviour
                 }
             }
         }
-
         BuildMesh();
-
     }
 
     void PopulateTerrainMap()
     {
-
         terrainGenerator.GenerateTerrain(ref terrainMap, size);
-
     }
 
     void MarchCube(Vector3 position, float[] cube)
@@ -119,14 +117,11 @@ public class VoxelTerrain : MonoBehaviour
 
                     // Calcualte the point along the edge that passes through.
                     vertPosition = vert1 + ((vert2 - vert1) * difference);
-
                 }
                 else
                 {
-
                     // Get the midpoint of this edge.
                     vertPosition = (vert1 + vert2) / 2f;
-
                 }
 
                 // Add to our vertices and triangles list and incremement the edgeIndex.
@@ -137,25 +132,19 @@ public class VoxelTerrain : MonoBehaviour
                     vertices.Add(vertPosition);
                     triangles.Add(vertices.Count - 1);
                 }
-
-
                 edgeIndex++;
-
             }
         }
     }
 
     int VertForIndice(Vector3 vert)
     {
-
         // Loop through all the vertices currently in the vertices list.
         for (int i = 0; i < vertices.Count; i++)
         {
-
             // If we find a vert that matches ours, then simply return this index.
             if (vertices[i] == vert)
                 return i;
-
         }
 
         // If we didn't find a match, add this vert to the list and return last index.
@@ -168,29 +157,22 @@ public class VoxelTerrain : MonoBehaviour
 
     int GetCubeConfiguration(float[] cube)
     {
-
         // Starting with a configuration of zero, loop through each point in the cube and check if it is below the terrain surface.
         int configurationIndex = 0;
         for (int i = 0; i < 8; i++)
         {
-
             // If it is, use bit-magic to the set the corresponding bit to 1. So if only the 3rd point in the cube was below
             // the surface, the bit would look like 00100000, which represents the integer value 32.
             if (cube[i] < terrainSurface)
                 configurationIndex |= 1 << i;
-
         }
-
         return configurationIndex;
-
     }
 
     void ClearMeshData()
     {
-
         vertices.Clear();
         triangles.Clear();
-
     }
 
     void BuildMesh()
@@ -199,7 +181,8 @@ public class VoxelTerrain : MonoBehaviour
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
         mesh.RecalculateNormals();
-
+        if (meshCollider != null)
+            meshCollider.sharedMesh = mesh;
     }
 
     private void FindComponents()
@@ -213,7 +196,8 @@ public class VoxelTerrain : MonoBehaviour
             mesh = new Mesh();
             meshFilter.mesh = mesh;
         }
-
+        if (GetComponent<MeshCollider>() != null)
+            meshCollider = GetComponent<MeshCollider>();
     }
 
     // Editor Only
@@ -222,12 +206,6 @@ public class VoxelTerrain : MonoBehaviour
     {
         FindComponents();
         UpdateMesh();
-    }
-
-    public void UpdateMesh()
-    {
-        PopulateTerrainMap();
-        CreateMeshData();
     }
 
 }
