@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshRenderer))]
@@ -21,16 +22,13 @@ public class VoxelTerrain : MonoBehaviour
     List<int> triangles = new List<int>();
     MeshFilter meshFilter;
     TerrainGenerator terrainGenerator;
+    Mesh mesh;
 
     private void Start()
     {
-
-        meshFilter = GetComponent<MeshFilter>();
-        terrainGenerator = GetComponent<TerrainGenerator>();
-
-        PopulateTerrainMap();
-        CreateMeshData();
-
+        FindComponents();
+        //PopulateTerrainMap();
+        //CreateMeshData();
     }
 
     void CreateMeshData()
@@ -197,33 +195,33 @@ public class VoxelTerrain : MonoBehaviour
 
     void BuildMesh()
     {
-
-        Mesh mesh;
-        if (meshFilter.mesh == null)
-        {
-            mesh = new Mesh();
-            meshFilter.mesh = mesh;
-        }
-        else
-        {
-            mesh = meshFilter.mesh;
-            mesh.Clear();
-        }
-
+        mesh.Clear();
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
         mesh.RecalculateNormals();
 
     }
 
+    private void FindComponents()
+    {
+        if (meshFilter == null)
+            meshFilter = GetComponent<MeshFilter>();
+        if (terrainGenerator == null)
+            terrainGenerator = GetComponent<TerrainGenerator>();
+        if (mesh == null)
+        {
+            mesh = new Mesh();
+            meshFilter.mesh = mesh;
+        }
 
+    }
 
     // Editor Only
 
     private void OnValidate()
     {
-        if (Application.isPlaying && Time.time > 1)
-            UpdateMesh();
+        FindComponents();
+        UpdateMesh();
     }
 
     public void UpdateMesh()

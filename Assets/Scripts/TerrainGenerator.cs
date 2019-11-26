@@ -24,7 +24,7 @@ public class TerrainGenerator : MonoBehaviour
         terrainMap = new float[size.x + 1, size.y + 1, size.z + 1];
 
         // The data points for terrain are stored at the corners of our "cubes", so the terrainMap needs to be 1 larger
-        // than the width/height of our mesh.
+        // than the width/height/depth of our mesh.
         for (int x = 0; x < size.x + 1; x++)
         {
             for (int y = 0; y < size.y + 1; y++)
@@ -67,7 +67,7 @@ public class TerrainGenerator : MonoBehaviour
                                 break;
                             case TerrainType.Landscape:
 
-                                // Create a flat landscape terrain but smooth
+                                // Create a landscape terrain but smooth
                                 terrainMap[x, y, z] = (Mathf.PerlinNoise(x / 16f * frequency, z / 16f * frequency) * amplitude + 0.5f) - y / 8f;
                                 break;
                         }
@@ -82,16 +82,12 @@ public class TerrainGenerator : MonoBehaviour
 
     // Editor Only
 
-    VoxelTerrain terrain;
-
-    private void Start()
-    {
-        terrain = GetComponent<VoxelTerrain>();
-    }
+    public VoxelTerrain terrain;
 
     private void OnValidate()
-    {
-        if (Application.isPlaying && Time.time > 1)
-            terrain.UpdateMesh();
+    {        
+        if (terrain == null)
+            terrain = GetComponent<VoxelTerrain>();
+        terrain.UpdateMesh();
     }
 }
