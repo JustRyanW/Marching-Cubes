@@ -3,26 +3,32 @@
 public static class MarchingCubes
 {
 
-    public static Vector3Int[] CornerTable = new Vector3Int[8] {
+    public static readonly Vector3Int[] CornerTable = new Vector3Int[8] {
 
-        new Vector3Int(0, 0, 0),
-        new Vector3Int(1, 0, 0),
-        new Vector3Int(1, 1, 0),
-        new Vector3Int(0, 1, 0),
-        new Vector3Int(0, 0, 1),
-        new Vector3Int(1, 0, 1),
-        new Vector3Int(1, 1, 1),
-        new Vector3Int(0, 1, 1) 
+        new Vector3Int(0, 0, 0), // 0
+        new Vector3Int(1, 0, 0), // 1
+        new Vector3Int(1, 1, 0), // 2
+        new Vector3Int(0, 1, 0), // 3
+        new Vector3Int(0, 0, 1), // 4
+        new Vector3Int(1, 0, 1), // 5
+        new Vector3Int(1, 1, 1), // 6
+        new Vector3Int(0, 1, 1)  // 7
 
     };
 
-    public static int[,] EdgeIndexes = new int[12, 2] {
+    public static readonly int[,] EdgeIndexes = new int[12, 2] {
 
         {0, 1}, {1, 2}, {3, 2}, {0, 3}, {4, 5}, {5, 6}, {7, 6}, {4, 7}, {0, 4}, {1, 5}, {2, 6}, {3, 7}
 
     };
 
-    public static int[,] TriangleTable = new int[,] {
+	 public static readonly int[] VertIndexes = new int[12] {
+
+        0, 1, 0, 1, 0, 1, 0, 1, 2, 2, 2, 2
+
+    };
+
+    public static readonly int[,] TriangleTable = new int[,] {
 
 	    {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 	    {0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},

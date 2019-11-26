@@ -19,6 +19,7 @@ public class VoxelTerrain : MonoBehaviour
     [Header("Private")]
     float[,,] terrainMap;
     Vector3[,,,] vertexMap;
+    float[,,,] indexMap;
     List<Vector3> vertices = new List<Vector3>();
     List<int> triangles = new List<int>();
     MeshFilter meshFilter;
@@ -69,7 +70,9 @@ public class VoxelTerrain : MonoBehaviour
     void PopulateTerrainMap()
     {
         terrainGenerator.GenerateTerrain(ref terrainMap, size);
+
         vertexMap = new Vector3[size.x + 1, size.y + 1, size.z + 1, 3];
+        indexMap = new float[size.x + 1, size.y + 1, size.z + 1, 3];
 
         for (int x = 0; x < size.x + 1; x++)
         {
@@ -77,6 +80,7 @@ public class VoxelTerrain : MonoBehaviour
             {
                 for (int z = 0; z < size.z + 1; z++)
                 {
+
                     float vert0 = terrainMap[x, y, z];
                     Vector3 vec0 = new Vector3(x, y, z);
                     Vector3Int[] vec = new Vector3Int[3] {
@@ -87,20 +91,25 @@ public class VoxelTerrain : MonoBehaviour
 
                     for (int i = 0; i < 3; i++)
                     {
-                        if ((i == 0 && x == size.x) || (i == 1 && y == size.y) || (i == 2 && z == size.z))
-                            return;
+                        if (!((i == 0 && x == size.x) || (i == 1 && y == size.y) || (i == 2 && z == size.z)))
+                        {
+                            if (smoothTerrain)
+                            {
+                                // Calculate the difference between the terrain values.
+                                float difference = (float)terrainMap[vec[i].x, vec[i].y, vec[i].z] - vert0;
 
-                        // Calculate the difference between the terrain values.
-                        float difference = (float)terrainMap[vec[i].x, vec[i].y, vec[i].z] - vert0;
+                                // If the difference is 0, then the terrain passes through the middle.
+                                if (difference == 0)
+                                    difference = terrainSurface;
+                                else
+                                    difference = (terrainSurface - vert0) / difference;
 
-                        // If the difference is 0, then the terrain passes through the middle.
-                        if (difference == 0)
-                            difference = terrainSurface;
-                        else
-                            difference = (terrainSurface - vert0) / difference;
+                                // Calcualte the point along the edge that passes through.
+                                vertexMap[x, y, z, i] = vec0 + ((vec[i] - vec0) * difference);
+                            } else
+                                vertexMap[x, y, z, i] = (vec0 + vec[i]) / 2;
 
-                        // Calcualte the point along the edge that passes through.
-                        vertexMap[x, y, z, i] = vec0 + ((vec[i] - vec0) * difference);
+                        }
                     }
                 }
             }
@@ -123,7 +132,6 @@ public class VoxelTerrain : MonoBehaviour
         {
             for (int p = 0; p < 3; p++)
             {
-
                 // Get the current indice. We increment triangleIndex through each loop.
                 int indice = MarchingCubes.TriangleTable[configIndex, edgeIndex];
 
@@ -131,44 +139,33 @@ public class VoxelTerrain : MonoBehaviour
                 if (indice == -1)
                     return;
 
-                // Get the vertices for the start and end of this edge.
+
+                // Get the vertices for the start of this edge.
                 Vector3 vert1 = position + MarchingCubes.CornerTable[MarchingCubes.EdgeIndexes[indice, 0]];
-                Vector3 vert2 = position + MarchingCubes.CornerTable[MarchingCubes.EdgeIndexes[indice, 1]];
+                // get the offset for this edge
+                int vertIndex = MarchingCubes.VertIndexes[indice];
 
-                Vector3 vertPosition;
-                if (smoothTerrain)
-                {
-
-                    // Get the terrain values at eaither end of our current edge from the cube array created above.
-                    float vert1Sample = cube[MarchingCubes.EdgeIndexes[indice, 0]];
-                    float vert2Sample = cube[MarchingCubes.EdgeIndexes[indice, 1]];
-
-                    // Calculate the difference between the terrain values.
-                    float difference = vert2Sample - vert1Sample;
-
-                    // If the difference is 0, then the terrain passes through the middle.
-                    if (difference == 0)
-                        difference = terrainSurface;
-                    else
-                        difference = (terrainSurface - vert1Sample) / difference;
-
-                    // Calcualte the point along the edge that passes through.
-                    vertPosition = vert1 + ((vert2 - vert1) * difference);
-                }
-                else
-                {
-                    // Get the midpoint of this edge.
-                    vertPosition = (vert1 + vert2) / 2f;
-                }
-
-                // Add to our vertices and triangles list and incremement the edgeIndex.
                 if (smoothShading)
-                    triangles.Add(VertForIndice(vertPosition));
+                {
+                    // check the index map if a vertex has already been created here
+                    if (indexMap[(int)vert1.x, (int)vert1.y, (int)vert1.z, vertIndex] == 0)
+                    {
+                        // if none has been created add a new one vertex and increment the triangles and add to the index map
+                        vertices.Add(vertexMap[(int)vert1.x, (int)vert1.y, (int)vert1.z, vertIndex]);
+                        triangles.Add(vertices.Count - 1);
+                        indexMap[(int)vert1.x, (int)vert1.y, (int)vert1.z, vertIndex] = vertices.Count - 1;
+                    }
+                    else
+                        // if so add the index of that vertice
+                        triangles.Add((int)indexMap[(int)vert1.x, (int)vert1.y, (int)vert1.z, vertIndex]);
+                }
                 else
                 {
-                    vertices.Add(vertPosition);
+                    vertices.Add(vertexMap[(int)vert1.x, (int)vert1.y, (int)vert1.z, vertIndex]);
                     triangles.Add(vertices.Count - 1);
                 }
+
+
                 edgeIndex++;
             }
         }
