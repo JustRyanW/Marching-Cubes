@@ -18,6 +18,7 @@ public class VoxelTerrain : MonoBehaviour
 
     [Header("Private")]
     float[,,] terrainMap;
+    Vector3[,,,] vertexMap;
     List<Vector3> vertices = new List<Vector3>();
     List<int> triangles = new List<int>();
     MeshFilter meshFilter;
@@ -68,6 +69,42 @@ public class VoxelTerrain : MonoBehaviour
     void PopulateTerrainMap()
     {
         terrainGenerator.GenerateTerrain(ref terrainMap, size);
+        vertexMap = new Vector3[size.x + 1, size.y + 1, size.z + 1, 3];
+
+        for (int x = 0; x < size.x + 1; x++)
+        {
+            for (int y = 0; y < size.y + 1; y++)
+            {
+                for (int z = 0; z < size.z + 1; z++)
+                {
+                    float vert0 = terrainMap[x, y, z];
+                    Vector3 vec0 = new Vector3(x, y, z);
+                    Vector3Int[] vec = new Vector3Int[3] {
+                        new Vector3Int(x + 1, y, z),
+                        new Vector3Int(x, y + 1, z),
+                        new Vector3Int(x, y, z + 1)
+                    };
+
+                    for (int i = 0; i < 3; i++)
+                    {
+                        if ((i == 0 && x == size.x) || (i == 1 && y == size.y) || (i == 2 && z == size.z))
+                            return;
+
+                        // Calculate the difference between the terrain values.
+                        float difference = (float)terrainMap[vec[i].x, vec[i].y, vec[i].z] - vert0;
+
+                        // If the difference is 0, then the terrain passes through the middle.
+                        if (difference == 0)
+                            difference = terrainSurface;
+                        else
+                            difference = (terrainSurface - vert0) / difference;
+
+                        // Calcualte the point along the edge that passes through.
+                        vertexMap[x, y, z, i] = vec0 + ((vec[i] - vec0) * difference);
+                    }
+                }
+            }
+        }
     }
 
     void MarchCube(Vector3 position, float[] cube)
