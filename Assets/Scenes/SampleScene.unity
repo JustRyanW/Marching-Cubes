@@ -295,9 +295,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d9fb5ab97d40403aa111b47768bd5e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  size: {x: 16, y: 16, z: 16}
+  size: {x: 32, y: 16, z: 32}
   smoothTerrain: 1
-  flatShaded: 1
+  smoothShading: 0
   terrainSurface: 0.5
 --- !u!4 &1775863618
 Transform:
@@ -370,6 +370,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cfe853bbb07b74f9abf0ad599824bdf4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  terrainType: 0
+  terrainType: 2
   solidEdges: 1
   scale: 7
+  amplitude: 2
+  frequency: 1

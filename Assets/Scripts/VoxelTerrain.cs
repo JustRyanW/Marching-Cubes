@@ -8,9 +8,11 @@ public class VoxelTerrain : MonoBehaviour
 {
     [Header("Settings")]
     public Vector3Int size = new Vector3Int(16, 16, 16);
+    [Tooltip("Interpolates the edge midpoint between vertexes to match the voxel data, creates smooth shapes.")]
     public bool smoothTerrain = true;
-    public bool flatShaded = true;
-    [Range(0, 1)]
+    [Tooltip("Smooths the normals of the terrain so it appears smooth.\nWaring: Enabling this will cause massive lag when generating the mesh!")]
+    public bool smoothShading = false;
+    [Range(0, 1), Tooltip("Changes the surface value of the terrain.")]
     public float terrainSurface = 0.5f;
 
     [Header("Private")]
@@ -69,7 +71,7 @@ public class VoxelTerrain : MonoBehaviour
     {
 
         terrainGenerator.GenerateTerrain(ref terrainMap, size);
-        
+
     }
 
     void MarchCube(Vector3 position, float[] cube)
@@ -130,15 +132,14 @@ public class VoxelTerrain : MonoBehaviour
                 }
 
                 // Add to our vertices and triangles list and incremement the edgeIndex.
-                if (flatShaded)
+                if (smoothShading)
+                    triangles.Add(VertForIndice(vertPosition));
+                else
                 {
-
                     vertices.Add(vertPosition);
                     triangles.Add(vertices.Count - 1);
-
                 }
-                else
-                    triangles.Add(VertForIndice(vertPosition));
+
 
                 edgeIndex++;
 
@@ -218,7 +219,7 @@ public class VoxelTerrain : MonoBehaviour
 
 
     // Editor Only
-    
+
     private void OnValidate()
     {
         if (Application.isPlaying && Time.time > 1)
