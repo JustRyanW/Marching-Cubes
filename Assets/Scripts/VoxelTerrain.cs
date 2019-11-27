@@ -11,7 +11,7 @@ public class VoxelTerrain : MonoBehaviour
     public Vector3Int size = new Vector3Int(16, 16, 16);
     [Tooltip("Interpolates the edge midpoint between vertexes to match the voxel data, creates smooth shapes.")]
     public bool smoothTerrain = true;
-    [Tooltip("Smooths the normals of the terrain so it appears smooth.\nWaring: Enabling this will cause massive lag when generating the mesh!")]
+    [Tooltip("Smooths the normals of the terrain so it appears smooth.")]
     public bool smoothShading = false;
     [Range(0, 1), Tooltip("Changes the surface value of the terrain.")]
     public float terrainSurface = 0.5f;
@@ -31,6 +31,10 @@ public class VoxelTerrain : MonoBehaviour
     {
         FindComponents();
         UpdateMesh();
+    }
+
+    private void Update() {
+        // UpdateMesh();
     }
 
     public void UpdateMesh()
@@ -80,8 +84,6 @@ public class VoxelTerrain : MonoBehaviour
             {
                 for (int z = 0; z < size.z + 1; z++)
                 {
-
-                    float vert0 = terrainMap[x, y, z];
                     Vector3 vec0 = new Vector3(x, y, z);
                     Vector3Int[] vec = new Vector3Int[3] {
                         new Vector3Int(x + 1, y, z),
@@ -91,18 +93,20 @@ public class VoxelTerrain : MonoBehaviour
 
                     for (int i = 0; i < 3; i++)
                     {
-                        if (!((i == 0 && x == size.x) || (i == 1 && y == size.y) || (i == 2 && z == size.z)))
+                        if ((i == 0 && x < size.x) || (i == 1 && y < size.y) || (i == 2 && z < size.z))
                         {
                             if (smoothTerrain)
                             {
+                                // vec1 = vec0
+
                                 // Calculate the difference between the terrain values.
-                                float difference = (float)terrainMap[vec[i].x, vec[i].y, vec[i].z] - vert0;
+                                float difference = (float)terrainMap[vec[i].x, vec[i].y, vec[i].z] - terrainMap[x, y, z];
 
                                 // If the difference is 0, then the terrain passes through the middle.
                                 if (difference == 0)
                                     difference = terrainSurface;
                                 else
-                                    difference = (terrainSurface - vert0) / difference;
+                                    difference = (terrainSurface - terrainMap[x, y, z]) / difference;
 
                                 // Calcualte the point along the edge that passes through.
                                 vertexMap[x, y, z, i] = vec0 + ((vec[i] - vec0) * difference);

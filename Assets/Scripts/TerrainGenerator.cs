@@ -70,7 +70,10 @@ public class TerrainGenerator : MonoBehaviour
                             case TerrainType.Landscape:
 
                                 // Create a landscape terrain but smooth
-                                terrainMap[x, y, z] = (Mathf.PerlinNoise(x / 16f * frequency + lOffset.x, z / 16f * frequency + lOffset.y) * amplitude + 0.5f) - y / 8f;
+                                float value = Mathf.PerlinNoise(x / 16f * frequency + lOffset.x, z / 16f * frequency + lOffset.y) * amplitude;
+                                value += Mathf.PerlinNoise(x / 8f * frequency + lOffset.x, z / 8f * frequency + lOffset.y) * amplitude / 4;
+                                value += Mathf.PerlinNoise(x / 3f * frequency + lOffset.x, z / 3f * frequency + lOffset.y) * amplitude / 16;
+                                terrainMap[x, y, z] = (value + 0.5f) - y / 8f;
                                 break;
                         }
                     }
