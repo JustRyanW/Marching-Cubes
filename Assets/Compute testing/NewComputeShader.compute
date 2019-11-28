@@ -5,5 +5,5 @@ RWStructuredBuffer<float3> dataBuffer;
 [numthreads(16,1,1)]
 void Multiply (uint3 id : SV_DispatchThreadID)
 {
-    dataBuffer[id.x] = dataBuffer[id.x] * 4.0;
+    dataBuffer[id.x] = dataBuffer[id.x] * 4.0 - (dataBuffer[id.x] * 4.0) % 1;
 }

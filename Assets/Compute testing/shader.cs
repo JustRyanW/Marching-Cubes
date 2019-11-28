@@ -6,15 +6,21 @@ public class shader : MonoBehaviour
 {
     public ComputeShader shader1;
     [Space]
-    [SerializeField]
+    [SerializeField, ContextMenuItem("Randomise Vectors", "Randomise")]
     Vector3[] data = new Vector3[1];
-    [SerializeField]
+    [SerializeField, ContextMenuItem("RunShader", "RunShader")]
     Vector3[] output = new Vector3[1];
 
-
-    private void Start()
+    void Randomise()
     {
-        RunShader();
+        for (int i = 0; i < data.Length; i++)
+        {
+            data[i] = new Vector3(
+                Random.Range(0, 1.0f),
+                Random.Range(0, 1.0f),
+                Random.Range(0, 1.0f)
+            );
+        }
     }
 
     void RunShader()
