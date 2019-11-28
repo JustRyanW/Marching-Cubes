@@ -3,9 +3,9 @@
 public class TerrainGenerator : MonoBehaviour
 {
     public enum TerrainType { Perlin3D, Flat, Landscape };
-    public TerrainType terrainType = TerrainType.Perlin3D;
 
     [Header("Settings")]
+    public TerrainType terrainType = TerrainType.Perlin3D;
     public bool solidEdges = true;
 
     [Header("Perlin3D")]
@@ -87,7 +87,7 @@ public class TerrainGenerator : MonoBehaviour
 
     // Editor Only
 
-    public VoxelTerrain terrain;
+    VoxelTerrain terrain;
 
     private void OnValidate()
     {        

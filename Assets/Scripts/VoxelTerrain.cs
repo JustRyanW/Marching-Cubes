@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-[RequireComponent(typeof(MeshFilter))]
-[RequireComponent(typeof(MeshRenderer))]
+[RequireComponent(typeof(MeshFilter)), RequireComponent(typeof(MeshRenderer))]
 public class VoxelTerrain : MonoBehaviour
 {
     [Header("Settings")]
@@ -13,13 +12,13 @@ public class VoxelTerrain : MonoBehaviour
     public bool smoothTerrain = true;
     [Tooltip("Smooths the normals of the terrain so it appears smooth.")]
     public bool smoothShading = false;
-    [Range(0, 1), Tooltip("Changes the surface value of the terrain.")]
+    [Range(0, 1), Tooltip("Changes the surface value of the terrain."), ContextMenuItem("Reset", "ResetSurfaceValue")]
     public float terrainSurface = 0.5f;
 
     [Header("Private")]
     float[,,] terrainMap;
     Vector3[,,,] vertexMap;
-    float[,,,] indexMap;
+    int[,,,] indexMap;
     List<Vector3> vertices = new List<Vector3>();
     List<int> triangles = new List<int>();
     MeshFilter meshFilter;
@@ -33,8 +32,9 @@ public class VoxelTerrain : MonoBehaviour
         UpdateMesh();
     }
 
-    private void Update() {
-        // UpdateMesh();
+    private void Update()
+    {
+        UpdateMesh();
     }
 
     public void UpdateMesh()
@@ -76,7 +76,7 @@ public class VoxelTerrain : MonoBehaviour
         terrainGenerator.GenerateTerrain(ref terrainMap, size);
 
         vertexMap = new Vector3[size.x + 1, size.y + 1, size.z + 1, 3];
-        indexMap = new float[size.x + 1, size.y + 1, size.z + 1, 3];
+        indexMap = new int[size.x + 1, size.y + 1, size.z + 1, 3];
 
         for (int x = 0; x < size.x + 1; x++)
         {
@@ -84,34 +84,20 @@ public class VoxelTerrain : MonoBehaviour
             {
                 for (int z = 0; z < size.z + 1; z++)
                 {
-                    Vector3 vec0 = new Vector3(x, y, z);
-                    Vector3Int[] vec = new Vector3Int[3] {
-                        new Vector3Int(x + 1, y, z),
-                        new Vector3Int(x, y + 1, z),
-                        new Vector3Int(x, y, z + 1)
-                    };
+                    Vector3Int vec0 = new Vector3Int(x, y, z);
 
                     for (int i = 0; i < 3; i++)
                     {
                         if ((i == 0 && x < size.x) || (i == 1 && y < size.y) || (i == 2 && z < size.z))
                         {
+                            Vector3Int vec1 = vec0 + MarchingCubes.offsets[i];
                             if (smoothTerrain)
                             {
-                                // vec1 = vec0
-
-                                // Calculate the difference between the terrain values.
-                                float difference = (float)terrainMap[vec[i].x, vec[i].y, vec[i].z] - terrainMap[x, y, z];
-
-                                // If the difference is 0, then the terrain passes through the middle.
-                                if (difference == 0)
-                                    difference = terrainSurface;
-                                else
-                                    difference = (terrainSurface - terrainMap[x, y, z]) / difference;
-
-                                // Calcualte the point along the edge that passes through.
-                                vertexMap[x, y, z, i] = vec0 + ((vec[i] - vec0) * difference);
-                            } else
-                                vertexMap[x, y, z, i] = (vec0 + vec[i]) / 2;
+                                float val = Mathf.InverseLerp(terrainMap[x, y, z], terrainMap[vec1.x, vec1.y, vec1.z], terrainSurface);
+                                vertexMap[x, y, z, i] = Vector3.Lerp(vec0, vec1, val);
+                            }
+                            else
+                                vertexMap[x, y, z, i] = (Vector3)(vec0 + vec1) / 2;
 
                         }
                     }
@@ -145,14 +131,16 @@ public class VoxelTerrain : MonoBehaviour
 
 
                 // Get the vertices for the start of this edge.
-                Vector3 vert1 = position + MarchingCubes.CornerTable[MarchingCubes.EdgeIndexes[indice, 0]];
+                Vector3 vert1 = position + MarchingCubes.CornerTable[MarchingCubes.EdgeIndexes[indice]];
                 // get the offset for this edge
                 int vertIndex = MarchingCubes.VertIndexes[indice];
 
                 if (smoothShading)
                 {
+                    // get the index from the index map
+                    int index = indexMap[(int)vert1.x, (int)vert1.y, (int)vert1.z, vertIndex];
                     // check the index map if a vertex has already been created here
-                    if (indexMap[(int)vert1.x, (int)vert1.y, (int)vert1.z, vertIndex] == 0)
+                    if (index == 0)
                     {
                         // if none has been created add a new one vertex and increment the triangles and add to the index map
                         vertices.Add(vertexMap[(int)vert1.x, (int)vert1.y, (int)vert1.z, vertIndex]);
@@ -161,7 +149,7 @@ public class VoxelTerrain : MonoBehaviour
                     }
                     else
                         // if so add the index of that vertice
-                        triangles.Add((int)indexMap[(int)vert1.x, (int)vert1.y, (int)vert1.z, vertIndex]);
+                        triangles.Add(index);
                 }
                 else
                 {
@@ -175,22 +163,11 @@ public class VoxelTerrain : MonoBehaviour
         }
     }
 
-    int VertForIndice(Vector3 vert)
+    void ResetSurfaceValue()
     {
-        // Loop through all the vertices currently in the vertices list.
-        for (int i = 0; i < vertices.Count; i++)
-        {
-            // If we find a vert that matches ours, then simply return this index.
-            if (vertices[i] == vert)
-                return i;
-        }
-
-        // If we didn't find a match, add this vert to the list and return last index.
-        vertices.Add(vert);
-        return vertices.Count - 1;
-
+        terrainSurface = 0.5f;
+        UpdateMesh();
     }
-
 
 
     int GetCubeConfiguration(float[] cube)
