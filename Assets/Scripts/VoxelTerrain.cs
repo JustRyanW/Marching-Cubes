@@ -34,7 +34,7 @@ public class VoxelTerrain : MonoBehaviour
 
     private void Update()
     {
-        UpdateMesh();
+        // UpdateMesh();
     }
 
     public void UpdateMesh()
