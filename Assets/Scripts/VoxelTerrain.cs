@@ -45,9 +45,9 @@ public class VoxelTerrain : MonoBehaviour
 
         if (Input.GetMouseButton(0) && Physics.Raycast(ray, out hitInfo))
         {
-            DrawBrush(true, hitInfo.point, 10f);
+            DrawBrush(true, hitInfo.point, 20f);
         } else if (Input.GetMouseButton(1) && Physics.Raycast(ray, out hitInfo))
-            DrawBrush(false, hitInfo.point, 10f);
+            DrawBrush(false, hitInfo.point, 20f);
 
         if (showoff)
         {
@@ -265,14 +265,14 @@ public class VoxelTerrain : MonoBehaviour
                     {
                         if (dist <= brushSize && terrainMap[x, y, z] < halfBrushSize - dist)
                         {
-                            terrainMap[x, y, z] += 0.01f;
+                            terrainMap[x, y, z] = Mathf.Clamp01(terrainMap[x, y, z] + 0.01f);
                         }
                     }
                     else
                     {
                         if (dist <= brushSize && terrainMap[x, y, z] > -halfBrushSize + dist)
                         {
-                            terrainMap[x, y, z] -= 0.01f;
+                            terrainMap[x, y, z] = Mathf.Clamp01(terrainMap[x, y, z] - 0.01f);
                         }
                     }
                 }
