@@ -2,6 +2,7 @@
 
     properties {
         _MainTex ("Texture", 2D) = "white" {}
+        _WallTex ("WallTexture", 2D) = "white" {}
         _TexScale ("Texture Scale", Float) = 1
     }
 
@@ -14,6 +15,7 @@
         #pragma targe 3.0
 
         sampler2D _MainTex;
+        sampler2D _WallTex;
         float _TexScale;
 
         struct Input {
@@ -22,7 +24,18 @@
         };
 
         void surf (Input IN, inout SurfaceOutputStandard o) {
-            o.Albedo = tex2D(_MainTex, IN.worldPos.xz);
+            float3 scaledWorldPos = IN.worldPos / _TexScale;
+            float3 pWeight = abs(IN.worldNormal);
+            pWeight /= pWeight.x + pWeight.y + pWeight.z;
+
+            float3 xP = tex2D (_WallTex, scaledWorldPos.yz) * pWeight.x;
+            //float3 yP = tex2D (_MainTex, scaledWorldPos.xz) * pWeight.y;
+            float3 yP = lerp(tex2D (_WallTex, scaledWorldPos.xz), tex2D (_MainTex, scaledWorldPos.xz), IN.worldNormal) * pWeight.y;
+            float3 zP = tex2D (_WallTex, scaledWorldPos.xy) * pWeight.z;
+
+            float3 nyP = tex2D (_WallTex, scaledWorldPos.zx) * pWeight.y;
+
+            o.Albedo = xP + yP + zP;
         }
 
         ENDCG
