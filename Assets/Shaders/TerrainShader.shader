@@ -12,7 +12,7 @@
 
         CGPROGRAM
         #pragma surface surf Standard fullforwardshadows
-        #pragma targe 3.0
+        #pragma target 3.0
 
         sampler2D _MainTex;
         sampler2D _WallTex;
