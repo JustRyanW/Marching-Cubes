@@ -35,10 +35,12 @@ public class VoxelTerrain : MonoBehaviour
     {
         FindComponents();
         UpdateMesh();
+        DrawBrush(true, new Vector3(8, 8, 8), 16f);
     }
 
     private void Update()
     {
+
         if (showoff)
         {
             transform.position = new Vector3(
@@ -49,11 +51,16 @@ public class VoxelTerrain : MonoBehaviour
             constantUpdate = true;
         }
         if (constantUpdate)
-        UpdateMesh();
+            UpdateMesh();
     }
 
     public void UpdateMesh()
     {
+        terrainGenerator.GenerateTerrain(ref terrainMap, size);
+        UpdateMesh2();
+    }
+
+    public void UpdateMesh2() {
         PopulateTerrainMap();
         CreateMeshData();
     }
@@ -88,8 +95,6 @@ public class VoxelTerrain : MonoBehaviour
 
     void PopulateTerrainMap()
     {
-        terrainGenerator.GenerateTerrain(ref terrainMap, size);
-
         vertexMap = new Vector3[size.x + 1, size.y + 1, size.z + 1, 3];
         indexMap = new int[size.x + 1, size.y + 1, size.z + 1, 3];
 
@@ -230,6 +235,49 @@ public class VoxelTerrain : MonoBehaviour
             meshCollider = GetComponent<MeshCollider>();
     }
 
+    void DrawBrush(bool addTerrain, Vector3 pos, float brushSize)
+    {
+        Vector2Int minMaxX = new Vector2Int((int)(pos.x - brushSize), (int)(pos.x + brushSize));
+        Vector2Int minMaxY = new Vector2Int((int)(pos.y - brushSize), (int)(pos.y + brushSize));
+        Vector2Int minMaxZ = new Vector2Int((int)(pos.z - brushSize), (int)(pos.z + brushSize));
+        Vec2IntClamp(ref minMaxX, 0, size.x + 1);
+        Vec2IntClamp(ref minMaxY, 0, size.y + 1);
+        Vec2IntClamp(ref minMaxZ, 0, size.z + 1);
+
+        for (int x = minMaxX.x; x < minMaxX.y; x++)
+        {
+            for (int y = minMaxY.x; y < minMaxY.y; y++)
+            {
+                for (int z = minMaxZ.x; z < minMaxZ.y; z++)
+                {
+                    float halfBrushSize = brushSize / 2;
+                    float dist = Vector3.Distance(new Vector3(x, y, z), pos);
+                    if (addTerrain)
+                    {
+                        if (dist <= brushSize && terrainMap[x, y, z] < halfBrushSize - dist)
+                        {
+                            terrainMap[x, y, z] = halfBrushSize - dist;
+                            UpdateMesh2();
+                        }
+                    }
+                    else
+                    {
+                        if (dist <= brushSize && terrainMap[x, y, z] > -halfBrushSize + dist)
+                        {
+                            terrainMap[x, y, z] = -halfBrushSize + dist;
+                            UpdateMesh2();
+                        }
+                    }
+                }
+            }
+        }
+    }
+    void Vec2IntClamp(ref Vector2Int vector, int min, int max)
+    {
+        vector.x = (int)Mathf.Clamp(vector.x, min, max);
+        vector.y = (int)Mathf.Clamp(vector.y, min, max);
+    }
+
     // Editor Only
 
     private void OnValidate()
@@ -241,7 +289,7 @@ public class VoxelTerrain : MonoBehaviour
     private void OnDrawGizmos()
     {
         if (drawBorder)
-        Gizmos.DrawWireCube(transform.position + (Vector3)size / 2, (terrainGenerator.solidEdges) ? size - Vector3.one * 2 : size);
+            Gizmos.DrawWireCube(transform.position + (Vector3)size / 2, (terrainGenerator.solidEdges) ? size - Vector3.one * 2 : size);
     }
 
 }
