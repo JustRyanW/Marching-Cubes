@@ -25,6 +25,7 @@ public class VoxelTerrain : MonoBehaviour
     TerrainGenerator terrainGenerator;
     Mesh mesh;
     MeshCollider meshCollider;
+    ComputeShader shader;
 
     private void Start()
     {
@@ -34,7 +35,7 @@ public class VoxelTerrain : MonoBehaviour
 
     private void Update()
     {
-        // UpdateMesh();
+        UpdateMesh();
     }
 
     public void UpdateMesh()
@@ -71,6 +72,11 @@ public class VoxelTerrain : MonoBehaviour
         BuildMesh();
     }
 
+    struct vert2 {
+        Vector4 v1;
+        Vector4 v2;
+    }
+
     void PopulateTerrainMap()
     {
         terrainGenerator.GenerateTerrain(ref terrainMap, size);
@@ -93,8 +99,9 @@ public class VoxelTerrain : MonoBehaviour
                             Vector3Int vec1 = vec0 + MarchingCubes.offsets[i];
                             if (smoothTerrain)
                             {
-                                float val = Mathf.InverseLerp(terrainMap[x, y, z], terrainMap[vec1.x, vec1.y, vec1.z], terrainSurface);
-                                vertexMap[x, y, z, i] = Vector3.Lerp(vec0, vec1, val);
+                                //float val = Mathf.InverseLerp(terrainMap[x, y, z], terrainMap[vec1.x, vec1.y, vec1.z], terrainSurface);
+                                //vertexMap[x, y, z, i] = Vector3.Lerp(vec0, vec1, val);
+                                // link to comput shader somehow, or just restart whole project with compute in mind
                             }
                             else
                                 vertexMap[x, y, z, i] = (Vector3)(vec0 + vec1) / 2;
@@ -104,6 +111,11 @@ public class VoxelTerrain : MonoBehaviour
                 }
             }
         }
+
+
+
+
+
     }
 
     void MarchCube(Vector3 position, float[] cube)

@@ -1,9 +1,14 @@
 ﻿#pragma kernel Multiply
 
-RWStructuredBuffer<float3> dataBuffer;
+RWStructuredBuffer<float> dataBuffer;
+AppendStructuredBuffer<float>points;
 
-[numthreads(16,1,1)]
+int indexFromCoord(int x, int y, int z) {
+    return z * 4 + y * 4 + x * 4;
+}
+
+[numthreads(4,4,4)]
 void Multiply (uint3 id : SV_DispatchThreadID)
 {
-    dataBuffer[id.x] = dataBuffer[id.x] * 4.0 - (dataBuffer[id.x] * 4.0) % 1;
+    points.Append(dataBuffer[indexFromCoord(id.x, id.y, id.z)] * 10.0);
 }
