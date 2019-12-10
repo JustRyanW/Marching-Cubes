@@ -15,6 +15,11 @@ public class VoxelTerrain : MonoBehaviour
     [Range(0, 1), Tooltip("Changes the surface value of the terrain."), ContextMenuItem("Reset", "ResetSurfaceValue")]
     public float terrainSurface = 0.5f;
 
+    [Header("Debug")]
+    public bool drawBorder = true;
+    public bool constantUpdate = false;
+    public bool showoff = false;
+
     [Header("Private")]
     float[,,] terrainMap;
     Vector3[,,,] vertexMap;
@@ -34,7 +39,17 @@ public class VoxelTerrain : MonoBehaviour
 
     private void Update()
     {
-        // UpdateMesh();
+        if (showoff)
+        {
+            transform.position = new Vector3(
+                Mathf.Sin(Time.time),
+                Mathf.Cos(Time.time),
+                Mathf.Sin(Time.time)
+            ) * 16;
+            constantUpdate = true;
+        }
+        if (constantUpdate)
+        UpdateMesh();
     }
 
     public void UpdateMesh()
@@ -221,6 +236,12 @@ public class VoxelTerrain : MonoBehaviour
     {
         FindComponents();
         UpdateMesh();
+    }
+
+    private void OnDrawGizmos()
+    {
+        if (drawBorder)
+        Gizmos.DrawWireCube(transform.position + (Vector3)size / 2, (terrainGenerator.solidEdges) ? size - Vector3.one * 2 : size);
     }
 
 }
