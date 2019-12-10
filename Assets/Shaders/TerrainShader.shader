@@ -2,7 +2,7 @@
 
     properties {
         _MainTex ("Texture", 2D) = "white" {}
-        _WallTex ("WallTexture", 2D) = "white" {}
+        _TopTex ("TopTexture", 2D) = "white" {}
         _TexScale ("Texture Scale", Float) = 1
     }
 
@@ -15,7 +15,7 @@
         #pragma target 3.0
 
         sampler2D _MainTex;
-        sampler2D _WallTex;
+        sampler2D _TopTex;
         float _TexScale;
 
         struct Input {
@@ -28,12 +28,9 @@
             float3 pWeight = abs(IN.worldNormal);
             pWeight /= pWeight.x + pWeight.y + pWeight.z;
 
-            float3 xP = tex2D (_WallTex, scaledWorldPos.yz) * pWeight.x;
-            //float3 yP = tex2D (_MainTex, scaledWorldPos.xz) * pWeight.y;
-            float3 yP = lerp(tex2D (_WallTex, scaledWorldPos.xz), tex2D (_MainTex, scaledWorldPos.xz), IN.worldNormal) * pWeight.y;
-            float3 zP = tex2D (_WallTex, scaledWorldPos.xy) * pWeight.z;
-
-            float3 nyP = tex2D (_WallTex, scaledWorldPos.zx) * pWeight.y;
+            float3 xP = tex2D (_MainTex, scaledWorldPos.yz) * pWeight.x;
+            float3 yP = ( IN.worldNormal.y > 0.0 ? tex2D (_TopTex, scaledWorldPos.xz) : tex2D (_MainTex, scaledWorldPos.xz) ) * pWeight.y;
+            float3 zP = tex2D (_MainTex, scaledWorldPos.xy) * pWeight.z;
 
             o.Albedo = xP + yP + zP;
         }
