@@ -35,11 +35,19 @@ public class VoxelTerrain : MonoBehaviour
     {
         FindComponents();
         UpdateMesh();
-        DrawBrush(true, new Vector3(8, 8, 8), 16f);
+        DrawBrush(true, new Vector3(8, 8, 8), 8);
     }
 
     private void Update()
     {
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hitInfo;
+
+        if (Input.GetMouseButton(0) && Physics.Raycast(ray, out hitInfo))
+        {
+            DrawBrush(true, hitInfo.point, 6f);
+        }
+
 
         if (showoff)
         {
@@ -60,7 +68,8 @@ public class VoxelTerrain : MonoBehaviour
         UpdateMesh2();
     }
 
-    public void UpdateMesh2() {
+    public void UpdateMesh2()
+    {
         PopulateTerrainMap();
         CreateMeshData();
     }
@@ -257,7 +266,6 @@ public class VoxelTerrain : MonoBehaviour
                         if (dist <= brushSize && terrainMap[x, y, z] < halfBrushSize - dist)
                         {
                             terrainMap[x, y, z] = halfBrushSize - dist;
-                            UpdateMesh2();
                         }
                     }
                     else
@@ -265,12 +273,12 @@ public class VoxelTerrain : MonoBehaviour
                         if (dist <= brushSize && terrainMap[x, y, z] > -halfBrushSize + dist)
                         {
                             terrainMap[x, y, z] = -halfBrushSize + dist;
-                            UpdateMesh2();
                         }
                     }
                 }
             }
         }
+        UpdateMesh2();
     }
     void Vec2IntClamp(ref Vector2Int vector, int min, int max)
     {
