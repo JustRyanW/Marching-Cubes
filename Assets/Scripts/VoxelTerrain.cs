@@ -31,23 +31,34 @@ public class VoxelTerrain : MonoBehaviour
     Mesh mesh;
     MeshCollider meshCollider;
 
+    Vector3 lastBrushPos;
+
     private void Start()
     {
         FindComponents();
         UpdateMesh();
-        DrawBrush(true, new Vector3(8, 8, 8), 8);
+        //DrawBrush(true, new Vector3(8, 8, 8), 8);
     }
 
     private void Update()
     {
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        RaycastHit hitInfo;
-
-        if (Input.GetMouseButton(0) && Physics.Raycast(ray, out hitInfo))
+        if (Input.GetMouseButtonDown(0))
         {
-            DrawBrush(true, hitInfo.point, 20f);
-        } else if (Input.GetMouseButton(1) && Physics.Raycast(ray, out hitInfo))
-            DrawBrush(false, hitInfo.point, 20f);
+            Brush(true, 6);
+        }
+        else if (Input.GetMouseButton(0))
+        {
+            Brush(true, 6, true);
+        }
+        else if (Input.GetMouseButtonDown(1))
+        {
+             Brush(false, 6);
+        }
+        else if (Input.GetMouseButton(1))
+        {
+            Brush(false, 6, true);
+        }
+           
 
         if (showoff)
         {
@@ -60,6 +71,21 @@ public class VoxelTerrain : MonoBehaviour
         }
         if (constantUpdate)
             UpdateMesh();
+    }
+
+    public void Brush(bool add, float size, bool smoothed = false)
+    {
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hitInfo;
+
+        if (Physics.Raycast(ray, out hitInfo))
+        {
+            Vector3 point = hitInfo.point;
+            if (smoothed)
+                point = Vector3.Lerp(lastBrushPos, point, 0.1f);
+            DrawBrush(add, point, size);
+            lastBrushPos = point;
+        }
     }
 
     public void UpdateMesh()
@@ -265,14 +291,14 @@ public class VoxelTerrain : MonoBehaviour
                     {
                         if (dist <= brushSize && terrainMap[x, y, z] < halfBrushSize - dist)
                         {
-                            terrainMap[x, y, z] = Mathf.Clamp01(terrainMap[x, y, z] + 0.01f);
+                            terrainMap[x, y, z] = Mathf.Clamp01(halfBrushSize - dist);
                         }
                     }
                     else
                     {
                         if (dist <= brushSize && terrainMap[x, y, z] > -halfBrushSize + dist)
                         {
-                            terrainMap[x, y, z] = Mathf.Clamp01(terrainMap[x, y, z] - 0.01f);
+                            terrainMap[x, y, z] = Mathf.Clamp01(halfBrushSize - dist);
                         }
                     }
                 }
