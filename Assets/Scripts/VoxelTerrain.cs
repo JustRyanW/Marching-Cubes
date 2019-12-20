@@ -321,13 +321,19 @@ public class VoxelTerrain : MonoBehaviour
     private void OnValidate()
     {
         FindComponents();
-        UpdateMesh();
+        UpdateMesh2();
     }
 
     private void OnDrawGizmos()
     {
         if (drawBorder)
             Gizmos.DrawWireCube(transform.position + (Vector3)size / 2, size);
+
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hitInfo;
+
+        if (Physics.Raycast(ray, out hitInfo))
+            Gizmos.DrawWireSphere(hitInfo.point, brushSize / 4);
     }
 
 }
