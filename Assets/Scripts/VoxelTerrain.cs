@@ -14,6 +14,7 @@ public class VoxelTerrain : MonoBehaviour
     public bool smoothShading = false;
     [Range(0, 1), Tooltip("Changes the surface value of the terrain."), ContextMenuItem("Reset", "ResetSurfaceValue")]
     public float terrainSurface = 0.5f;
+    public bool solidEdges = true;
 
     [Header("Debug")]
     public bool drawBorder = true;
@@ -31,8 +32,6 @@ public class VoxelTerrain : MonoBehaviour
     Mesh mesh;
     MeshCollider meshCollider;
 
-    Vector3 lastBrushPos;
-
     private void Start()
     {
         FindComponents();
@@ -42,23 +41,15 @@ public class VoxelTerrain : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButton(0))
         {
-            Brush(true, 6);
-        }
-        else if (Input.GetMouseButton(0))
-        {
-            Brush(true, 6, true);
-        }
-        else if (Input.GetMouseButtonDown(1))
-        {
-             Brush(false, 6);
+            Brush(true, 12, 50);
         }
         else if (Input.GetMouseButton(1))
         {
-            Brush(false, 6, true);
+            Brush(false, 12, 50);
         }
-           
+
 
         if (showoff)
         {
@@ -73,7 +64,7 @@ public class VoxelTerrain : MonoBehaviour
             UpdateMesh();
     }
 
-    public void Brush(bool add, float size, bool smoothed = false)
+    public void Brush(bool add, float size, float speed)
     {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hitInfo;
@@ -81,10 +72,7 @@ public class VoxelTerrain : MonoBehaviour
         if (Physics.Raycast(ray, out hitInfo))
         {
             Vector3 point = hitInfo.point;
-            if (smoothed)
-                point = Vector3.Lerp(lastBrushPos, point, 0.1f);
-            DrawBrush(add, point, size);
-            lastBrushPos = point;
+            DrawBrush(add, point, size, speed);
         }
     }
 
@@ -133,12 +121,21 @@ public class VoxelTerrain : MonoBehaviour
         vertexMap = new Vector3[size.x + 1, size.y + 1, size.z + 1, 3];
         indexMap = new int[size.x + 1, size.y + 1, size.z + 1, 3];
 
+        if (solidEdges)
+            for (int x = 0; x < size.x + 1; x++)
+                for (int y = 0; y < size.y + 1; y++)
+                    for (int z = 0; z < size.z + 1; z++)
+                        if (x == 0 || x == size.x || y == 0 || y == size.y || z == 0 || z == size.z)
+                            terrainMap[x, y, z] = float.MinValue;
+                            
+
         for (int x = 0; x < size.x + 1; x++)
         {
             for (int y = 0; y < size.y + 1; y++)
             {
                 for (int z = 0; z < size.z + 1; z++)
                 {
+
                     Vector3Int vec0 = new Vector3Int(x, y, z);
 
                     for (int i = 0; i < 3; i++)
@@ -270,7 +267,7 @@ public class VoxelTerrain : MonoBehaviour
             meshCollider = GetComponent<MeshCollider>();
     }
 
-    void DrawBrush(bool addTerrain, Vector3 pos, float brushSize)
+    void DrawBrush(bool addTerrain, Vector3 pos, float brushSize, float speed)
     {
         Vector2Int minMaxX = new Vector2Int((int)(pos.x - brushSize), (int)(pos.x + brushSize));
         Vector2Int minMaxY = new Vector2Int((int)(pos.y - brushSize), (int)(pos.y + brushSize));
@@ -278,6 +275,8 @@ public class VoxelTerrain : MonoBehaviour
         Vec2IntClamp(ref minMaxX, 0, size.x + 1);
         Vec2IntClamp(ref minMaxY, 0, size.y + 1);
         Vec2IntClamp(ref minMaxZ, 0, size.z + 1);
+
+        float lerp = 1 / speed;
 
         for (int x = minMaxX.x; x < minMaxX.y; x++)
         {
@@ -287,19 +286,18 @@ public class VoxelTerrain : MonoBehaviour
                 {
                     float halfBrushSize = brushSize / 2;
                     float dist = Vector3.Distance(new Vector3(x, y, z), pos);
+
                     if (addTerrain)
                     {
-                        if (dist <= brushSize && terrainMap[x, y, z] < halfBrushSize - dist)
-                        {
-                            terrainMap[x, y, z] = Mathf.Clamp01(halfBrushSize - dist);
-                        }
+                        float add = Mathf.Clamp01(Mathf.Lerp(terrainMap[x, y, z], halfBrushSize - dist, lerp / brushSize));
+                        if (dist <= brushSize && terrainMap[x, y, z] < add)
+                            terrainMap[x, y, z] = add;
                     }
                     else
                     {
-                        if (dist <= brushSize && terrainMap[x, y, z] > -halfBrushSize + dist)
-                        {
-                            terrainMap[x, y, z] = Mathf.Clamp01(halfBrushSize - dist);
-                        }
+                        float remove = Mathf.Clamp01(Mathf.Lerp(terrainMap[x, y, z], dist - halfBrushSize, lerp / brushSize));
+                        if (dist <= brushSize && terrainMap[x, y, z] > remove)
+                            terrainMap[x, y, z] = remove;
                     }
                 }
             }
@@ -307,6 +305,7 @@ public class VoxelTerrain : MonoBehaviour
         // queue mesh update at the end of update only if a change has been made, will save performace on multiple edits in one frame
         UpdateMesh2();
     }
+
     void Vec2IntClamp(ref Vector2Int vector, int min, int max)
     {
         vector.x = (int)Mathf.Clamp(vector.x, min, max);
@@ -324,7 +323,7 @@ public class VoxelTerrain : MonoBehaviour
     private void OnDrawGizmos()
     {
         if (drawBorder)
-            Gizmos.DrawWireCube(transform.position + (Vector3)size / 2, (terrainGenerator.solidEdges) ? size - Vector3.one * 2 : size);
+            Gizmos.DrawWireCube(transform.position + (Vector3)size / 2, size);
     }
 
 }

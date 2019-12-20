@@ -6,7 +6,6 @@ public class TerrainGenerator : MonoBehaviour
 
     [Header("Settings")]
     public TerrainType terrainType = TerrainType.Perlin3D;
-    public bool solidEdges = true;
 
     [Header("Perlin3D")]
     public float scale = 7f;
@@ -33,31 +32,26 @@ public class TerrainGenerator : MonoBehaviour
             {
                 for (int z = 0; z < size.z + 1; z++)
                 {
-                    if (solidEdges && (x == 0 || x == size.x || y == 0 || y == size.y || z == 0 || z == size.z))
-                        terrainMap[x, y, z] = float.MinValue;
-                    else
+                    switch (terrainType)
                     {
-                        switch (terrainType)
-                        {
 
-                            case TerrainType.Perlin3D:
+                        case TerrainType.Perlin3D:
 
-                                // Get values from 3D noise function.
-                                terrainMap[x, y, z] = Noise.Perlin3D(x, y, z, scale, transform.position + offset);
+                            // Get values from 3D noise function.
+                            terrainMap[x, y, z] = Noise.Perlin3D(x, y, z, scale, transform.position + offset);
 
-                                break;
-                            case TerrainType.Flat:
-                                terrainMap[x, y, z] = 0;
-                                break;
-                            case TerrainType.Landscape:
+                            break;
+                        case TerrainType.Flat:
+                            terrainMap[x, y, z] = 0;
+                            break;
+                        case TerrainType.Landscape:
 
-                                // Create a landscape terrain but smooth
-                                float value = Mathf.PerlinNoise(x / 16f * frequency + lOffset.x, z / 16f * frequency + lOffset.y) * amplitude;
-                                value += Mathf.PerlinNoise(x / 8f * frequency + lOffset.x, z / 8f * frequency + lOffset.y) * amplitude / 4;
-                                value += Mathf.PerlinNoise(x / 3f * frequency + lOffset.x, z / 3f * frequency + lOffset.y) * amplitude / 16;
-                                terrainMap[x, y, z] = (value + 0.5f) - y / 8f;
-                                break;
-                        }
+                            // Create a landscape terrain but smooth
+                            float value = Mathf.PerlinNoise(x / 16f * frequency + lOffset.x, z / 16f * frequency + lOffset.y) * amplitude;
+                            value += Mathf.PerlinNoise(x / 8f * frequency + lOffset.x, z / 8f * frequency + lOffset.y) * amplitude / 4;
+                            value += Mathf.PerlinNoise(x / 3f * frequency + lOffset.x, z / 3f * frequency + lOffset.y) * amplitude / 16;
+                            terrainMap[x, y, z] = (value + 0.5f) - y / 8f;
+                            break;
                     }
                 }
             }
@@ -72,7 +66,7 @@ public class TerrainGenerator : MonoBehaviour
     VoxelTerrain terrain;
 
     private void OnValidate()
-    {        
+    {
         if (terrain == null)
             terrain = GetComponent<VoxelTerrain>();
         terrain.UpdateMesh();
