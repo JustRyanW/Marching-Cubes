@@ -38,7 +38,7 @@ public class TerrainGenerator : MonoBehaviour
                         case TerrainType.Perlin3D:
 
                             // Get values from 3D noise function.
-                            terrainMap[x, y, z] = Noise.Perlin3D(x, y, z, scale, transform.position + offset);
+                            terrainMap[x, y, z] = Mathf.Clamp01((Noise.Perlin3D(x, y, z, scale, transform.position + offset) - 0.5f) * 10f + 0.5f); 
 
                             break;
                         case TerrainType.Flat:

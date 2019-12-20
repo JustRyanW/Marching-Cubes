@@ -16,6 +16,10 @@ public class VoxelTerrain : MonoBehaviour
     public float terrainSurface = 0.5f;
     public bool solidEdges = true;
 
+    [Header("Brush")]
+    public float brushSize = 12f;
+    public float brushSpeed = 50f;
+
     [Header("Debug")]
     public bool drawBorder = true;
     public bool constantUpdate = false;
@@ -43,11 +47,11 @@ public class VoxelTerrain : MonoBehaviour
     {
         if (Input.GetMouseButton(0))
         {
-            Brush(true, 12, 50);
+            Brush(true, brushSize, brushSpeed);
         }
         else if (Input.GetMouseButton(1))
         {
-            Brush(false, 12, 50);
+            Brush(false, brushSize, brushSpeed);
         }
 
 
@@ -127,7 +131,7 @@ public class VoxelTerrain : MonoBehaviour
                     for (int z = 0; z < size.z + 1; z++)
                         if (x == 0 || x == size.x || y == 0 || y == size.y || z == 0 || z == size.z)
                             terrainMap[x, y, z] = float.MinValue;
-                            
+
 
         for (int x = 0; x < size.x + 1; x++)
         {
@@ -289,13 +293,13 @@ public class VoxelTerrain : MonoBehaviour
 
                     if (addTerrain)
                     {
-                        float add = Mathf.Clamp01(Mathf.Lerp(terrainMap[x, y, z], halfBrushSize - dist, lerp / brushSize));
+                        float add = Mathf.Clamp01(Mathf.Lerp(terrainMap[x, y, z], halfBrushSize - dist, lerp));
                         if (dist <= brushSize && terrainMap[x, y, z] < add)
                             terrainMap[x, y, z] = add;
                     }
                     else
                     {
-                        float remove = Mathf.Clamp01(Mathf.Lerp(terrainMap[x, y, z], dist - halfBrushSize, lerp / brushSize));
+                        float remove = Mathf.Clamp01(Mathf.Lerp(terrainMap[x, y, z], dist - halfBrushSize, lerp));
                         if (dist <= brushSize && terrainMap[x, y, z] > remove)
                             terrainMap[x, y, z] = remove;
                     }
