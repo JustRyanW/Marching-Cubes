@@ -1,2 +1,0 @@
-# Marching Cubes
- 
