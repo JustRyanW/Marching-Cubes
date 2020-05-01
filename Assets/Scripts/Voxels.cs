@@ -6,8 +6,9 @@ using UnityEditor;
 public class Voxels : MonoBehaviour
 {
     public Vector3Int size = new Vector3Int(8, 8, 8);
+    public float surface = 0;
 
-    private float[,,] voxels;
+    private float[,,] voxels = new float[9, 9, 9];
 
     [ContextMenu("Randomize Voxels")]
     private void Randomize() {
@@ -34,15 +35,23 @@ public class Voxels : MonoBehaviour
             {
                 for (int z = size.z; z >= 0; z--)
                 {
-                    Gizmos.color = Color.Lerp(Color.black, Color.white, voxels[x, y, z]);
-                    Gizmos.DrawSphere(new Vector3(x, y, z), 0.1f);
+                    if (voxels[x, y, z] >= surface)
+                    {
+                        Gizmos.color = Color.Lerp(Color.black, Color.white, voxels[x, y, z]);
+                        Gizmos.DrawSphere(new Vector3(x, y, z), 0.1f);   
+                    }
                 }
             }
         }
     }
 
     private void OnValidate() {
-        size.Clamp(Vector3Int.one, Vector3Int.one * 16);
-        voxels = new float[size.x + 1, size.y + 1, size.z + 1];
+        if (size.x + 1 != voxels.GetLength(0) || size.y + 1 != voxels.GetLength(1) || size.z + 1 != voxels.GetLength(2))
+        {
+            size.Clamp(Vector3Int.one, Vector3Int.one * 16);
+            voxels = new float[size.x + 1, size.y + 1, size.z + 1];
+        }
+
+        surface = Mathf.Clamp01(surface);
     }
 }
