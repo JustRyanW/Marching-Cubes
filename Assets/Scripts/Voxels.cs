@@ -12,14 +12,20 @@ public class Voxels : MonoBehaviour {
     public Vector3Int size = new Vector3Int(8, 8, 8);
     public float surface = 0;
     public bool surfaceInterpolation = true;
+    public bool smoothShading = true;
 
     private Voxel[,,] voxels = new Voxel[8, 8, 8];
 
     private Vector3?[,,,] vertexMap = new Vector3?[8, 8, 8, 3];
     private int[,,,] indexMap = new int[8, 8, 8, 3];
-    private List<Vector3> verticies = new List<Vector3>();
+    private List<Vector3> vertices = new List<Vector3>();
     private List<int> triangles = new List<int>();
     private MeshFilter meshFilter;
+
+    [Header("Debug")]
+    public bool drawBounds;
+    public bool drawVoxels;
+    public bool drawVerticies;
 
     [ContextMenu("Position Verticies")]
     private void positionVerticies() {
@@ -37,7 +43,7 @@ public class Voxels : MonoBehaviour {
 
     private void positionVertex(int x, int y, int z, int i) {
         Vector3Int position = new Vector3Int(x, y, z);
-        Vector3Int offset = position + GetCorner(1 << i);
+        Vector3Int offset = position + GetCorner(4 >> i);
         float A = voxels[x, y, z].value;
         float B;
 
@@ -60,22 +66,91 @@ public class Voxels : MonoBehaviour {
         }
     }
 
-    private void MarchCube (Vector3 position, int configIndex) {
-        if (configIndex == 0 || configIndex == 255) {
-
+    [ContextMenu("Create Mesh Data")]
+    void CreateMeshData()
+    {
+        ClearMeshData();
+        for (int x = 0; x < size.x - 1; x++) {
+            for (int y = 0; y < size.y - 1; y++) {
+                for (int z = 0; z < size.z - 1; z++) {
+                    float[] cube = new float[8];
+                    for (int i = 0; i < 8; i++) {
+                        Vector3Int corner = new Vector3Int(x, y, z) + GetCorner(CornerTable[i]);
+                        cube[i] = voxels[corner.x, corner.y, corner.z].value;
+                    }
+                    MarchCube(new Vector3Int(x, y, z), cube);
+                }
+            }
         }
+        BuildMesh();
+    }
+
+    private void MarchCube (Vector3Int position, float[] cube) {
+        int configIndex = GetCubeConfiguration(cube);
+
+        if (configIndex == 0 || configIndex == 255) {
+            return;
+        }
+
+        int edgeIndex = 0;
+        for (int i = 0; i < 5; i++) {
+            for (int p = 0; p < 3; p++) {
+                int indice = TriangleTable[configIndex, edgeIndex];
+
+                if (indice == -1) {
+                    return;
+                }
+
+                Vector3Int vert = position + GetCorner(EdgeTable[indice, 0]);
+                int vertIndex = EdgeTable[indice, 1];
+
+                if (vertexMap[vert.x, vert.y, vert.z, vertIndex] == null) {
+                    Debug.Log("ahhh");
+                    return;
+                }
+
+                Vector3 vertex = (Vector3)vertexMap[vert.x, vert.y, vert.z, vertIndex];
+                int index = indexMap[vert.x, vert.y, vert.z, vertIndex];
+                
+
+                if (smoothShading) {
+                    if (index == 0) {
+                        vertices.Add(vertex + new Vector3(0.5f, 0.5f, 0.5f));
+                        triangles.Add(vertices.Count - 1);
+                        indexMap[vert.x, vert.y, vert.z, vertIndex] = vertices.Count - 1;
+                    } else {
+                        triangles.Add(index);
+                    }
+                } else {
+                    vertices.Add(vertex + new Vector3(0.5f, 0.5f, 0.5f));
+                    triangles.Add(vertices.Count - 1);
+                }
+                edgeIndex++;
+            }
+        }
+    }
+
+    int GetCubeConfiguration(float[] cube)
+    {
+        int configurationIndex = 0;
+        for (int i = 0; i < 8; i++)
+        {
+            if (cube[i] < surface)
+                configurationIndex |= 1 << i;
+        }
+        return configurationIndex;
     }
 
     private void BuildMesh() {
         Mesh mesh = new Mesh();
-        mesh.vertices = verticies.ToArray();
+        mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
         mesh.RecalculateNormals();
-        meshFilter.mesh = mesh;
+        meshFilter.sharedMesh = mesh;
     }
 
     private void ClearMeshData() {
-        verticies.Clear();
+        vertices.Clear();
         triangles.Clear();
     }
 
@@ -100,25 +175,31 @@ public class Voxels : MonoBehaviour {
     }
 
     private void OnDrawGizmos() {
-        Gizmos.color = Color.white;
-        Gizmos.DrawWireCube((Vector3)size / 2, size);
+        if (drawBounds) {
+            Gizmos.color = Color.white;
+            Gizmos.DrawWireCube((Vector3)size / 2, size);
+        }
 
-        for (int x = size.x - 1; x >= 0; x--) {
-            for (int y = 0; y < size.y; y++) {
-                for (int z = size.z - 1; z >= 0; z--) {
-                    if (voxels[x, y, z].value >= surface) {
-                        Gizmos.color = Color.Lerp(Color.black, Color.white, voxels[x, y, z].value);
-                        Gizmos.DrawCube(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f), Vector3.one * 0.1f);   
+        if (drawVoxels) {
+            for (int x = size.x - 1; x >= 0; x--) {
+                for (int y = 0; y < size.y; y++) {
+                    for (int z = size.z - 1; z >= 0; z--) {
+                        if (voxels[x, y, z].value >= surface) {
+                            Gizmos.color = Color.Lerp(Color.black, Color.white, voxels[x, y, z].value);
+                            Gizmos.DrawCube(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f), Vector3.one * 0.1f);   
+                        }
                     }
                 }
             }
         }
 
-        Gizmos.color = Color.red;
-        foreach (Vector3? vertex in vertexMap)
-        {
-            if (vertex != null) {
-                Gizmos.DrawSphere((Vector3)vertex + new Vector3(0.5f, 0.5f, 0.5f), 0.1f);
+        if (drawVerticies) {
+            Gizmos.color = Color.red;
+            foreach (Vector3? vertex in vertexMap)
+            {
+                if (vertex != null) {
+                    Gizmos.DrawSphere((Vector3)vertex + new Vector3(0.5f, 0.5f, 0.5f), 0.1f);
+                }
             }
         }
     }
@@ -146,7 +227,11 @@ public class Voxels : MonoBehaviour {
         }
     }
 
-    static readonly int[,] edgeVertexOffsets = new int[12, 2] {
+    static readonly int[] CornerTable = new int[8] {
+        0, 4, 6, 2, 1, 5, 7, 3
+    };
+
+    static readonly int[,] EdgeTable = new int[12, 2] {
         { 0, 0 }, // 0
         { 4, 1 }, // 1
         { 2, 0 }, // 2
