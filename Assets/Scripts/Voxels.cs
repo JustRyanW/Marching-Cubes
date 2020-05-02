@@ -28,20 +28,23 @@ public class Voxels : MonoBehaviour {
     public bool drawVerticies;
 
     [ContextMenu("Position Verticies")]
-    private void positionVerticies() {
+    private void PositionVerticies() {
+        vertexMap = new Vector3?[size.x, size.y, size.z, 3];
+        indexMap = new int[size.x, size.y, size.z, 3];
+        
         for (int x = 0; x < size.x; x++) {
             for (int y = 0; y < size.y; y++) {
                 for (int z = 0; z < size.z; z++) {
-                        positionVertex(x, y, z, 0);
-                        positionVertex(x, y, z, 1);
-                        positionVertex(x, y, z, 2);
+                        PositionVertex(x, y, z, 0);
+                        PositionVertex(x, y, z, 1);
+                        PositionVertex(x, y, z, 2);
                 }
             }
         }
 
     }
 
-    private void positionVertex(int x, int y, int z, int i) {
+    private void PositionVertex(int x, int y, int z, int i) {
         Vector3Int position = new Vector3Int(x, y, z);
         Vector3Int offset = position + GetCorner(4 >> i);
         float A = voxels[x, y, z].value;
@@ -70,6 +73,7 @@ public class Voxels : MonoBehaviour {
     void CreateMeshData()
     {
         ClearMeshData();
+        PositionVerticies();
         for (int x = 0; x < size.x - 1; x++) {
             for (int y = 0; y < size.y - 1; y++) {
                 for (int z = 0; z < size.z - 1; z++) {
@@ -105,24 +109,24 @@ public class Voxels : MonoBehaviour {
                 int vertIndex = EdgeTable[indice, 1];
 
                 if (vertexMap[vert.x, vert.y, vert.z, vertIndex] == null) {
-                    Debug.Log("ahhh");
+                    Debug.Log("Null Vertex");
                     return;
                 }
 
-                Vector3 vertex = (Vector3)vertexMap[vert.x, vert.y, vert.z, vertIndex];
-                int index = indexMap[vert.x, vert.y, vert.z, vertIndex];
+                Vector3 vertex = (Vector3)vertexMap[vert.x, vert.y, vert.z, vertIndex] + new Vector3(0.5f, 0.5f, 0.5f);           
                 
 
                 if (smoothShading) {
+                    int index = indexMap[vert.x, vert.y, vert.z, vertIndex];
                     if (index == 0) {
-                        vertices.Add(vertex + new Vector3(0.5f, 0.5f, 0.5f));
+                        vertices.Add(vertex);
                         triangles.Add(vertices.Count - 1);
                         indexMap[vert.x, vert.y, vert.z, vertIndex] = vertices.Count - 1;
                     } else {
                         triangles.Add(index);
                     }
                 } else {
-                    vertices.Add(vertex + new Vector3(0.5f, 0.5f, 0.5f));
+                    vertices.Add(vertex);
                     triangles.Add(vertices.Count - 1);
                 }
                 edgeIndex++;
@@ -142,14 +146,13 @@ public class Voxels : MonoBehaviour {
     }
 
     private void BuildMesh() {
-        Mesh mesh = new Mesh();
-        mesh.vertices = vertices.ToArray();
-        mesh.triangles = triangles.ToArray();
-        mesh.RecalculateNormals();
-        meshFilter.sharedMesh = mesh;
+        meshFilter.sharedMesh.vertices = vertices.ToArray();
+        meshFilter.sharedMesh.triangles = triangles.ToArray();
+        meshFilter.sharedMesh.RecalculateNormals();
     }
 
     private void ClearMeshData() {
+        meshFilter.sharedMesh.Clear();
         vertices.Clear();
         triangles.Clear();
     }
@@ -224,6 +227,9 @@ public class Voxels : MonoBehaviour {
 
         if (meshFilter == null) {
             meshFilter = GetComponent<MeshFilter>();
+        }
+        if (meshFilter.sharedMesh == null) {
+            meshFilter.sharedMesh = new Mesh();
         }
     }
 
